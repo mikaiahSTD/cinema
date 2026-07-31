@@ -1,4 +1,4 @@
-package com.example.demo.enums;
+package com.example.demo.constant;
 
 public enum ReservationStatus {
   PENDING,

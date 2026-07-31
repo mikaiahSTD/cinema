@@ -1,6 +1,6 @@
-package com.example.demo.models;
+package com.example.demo.repository.model;
 
-import com.cinema.app.enums.ReservationStatus;
+import com.example.demo.constant.ReservationStatus;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.HashSet;
@@ -17,7 +17,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Reservation {
+public class JReservation {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -33,16 +33,16 @@ public class Reservation {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "projection_id", nullable = false)
-  private Projection projection;
+  private JProjection projection;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+  private JUser user;
 
   @ManyToMany
   @JoinTable(
       name = "reservation_seats",
       joinColumns = @JoinColumn(name = "reservation_id"),
       inverseJoinColumns = @JoinColumn(name = "seat_id"))
-  private Set<Seat> seats = new HashSet<>();
+  private Set<JSeat> seats = new HashSet<>();
 }

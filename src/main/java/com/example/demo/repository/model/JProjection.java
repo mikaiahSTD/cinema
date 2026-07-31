@@ -1,4 +1,4 @@
-package com.example.demo.models;
+package com.example.demo.repository.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -17,7 +17,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Projection {
+public class JProjection {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -32,12 +32,12 @@ public class Projection {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "room_id", nullable = false)
-  private Room room;
+  private JRoom room;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "movie_id", nullable = false)
-  private Movie movie;
+  private JMovie movie;
 
   @OneToMany(mappedBy = "projection", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<Reservation> reservations = new HashSet<>();
+  private Set<JReservation> reservations = new HashSet<>();
 }

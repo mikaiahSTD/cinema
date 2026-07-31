@@ -1,6 +1,7 @@
-package com.example.demo.models;
+package com.example.demo.repository.model;
 
-import com.example.demo.enums.Genre;
+import com.example.demo.constant.Genre;
+import com.example.demo.converter.DurationConverter;
 import jakarta.persistence.*;
 import java.time.Duration;
 import java.util.HashSet;
@@ -17,7 +18,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Movie {
+public class JMovie {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -37,8 +38,9 @@ public class Movie {
   private String description;
 
   @Column(name = "duration", nullable = false)
+  @Convert(converter = DurationConverter.class)
   private Duration duration;
 
   @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<Projection> projections = new HashSet<>();
+  private Set<JProjection> projections = new HashSet<>();
 }

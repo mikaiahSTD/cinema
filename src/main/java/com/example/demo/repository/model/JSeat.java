@@ -1,4 +1,4 @@
-package com.example.demo.models;
+package com.example.demo.repository.model;
 
 import jakarta.persistence.*;
 import java.util.HashSet;
@@ -15,7 +15,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Seat {
+public class JSeat {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -27,8 +27,8 @@ public class Seat {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "room_id", nullable = false)
-  private Room room;
+  private JRoom room;
 
   @ManyToMany(mappedBy = "seats")
-  private Set<Reservation> reservations = new HashSet<>();
+  private Set<JReservation> reservations = new HashSet<>();
 }

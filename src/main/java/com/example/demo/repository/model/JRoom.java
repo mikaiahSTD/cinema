@@ -1,4 +1,4 @@
-package com.example.demo.models;
+package com.example.demo.repository.model;
 
 import jakarta.persistence.*;
 import java.util.HashSet;
@@ -15,7 +15,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Room {
+public class JRoom {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -29,8 +29,8 @@ public class Room {
   private int capacity;
 
   @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<Seat> seats = new HashSet<>();
+  private Set<JSeat> seats = new HashSet<>();
 
   @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<Projection> projections = new HashSet<>();
+  private Set<JProjection> projections = new HashSet<>();
 }

@@ -1,12 +1,13 @@
-package com.example.demo.models;
+package com.example.demo.repository.model;
 
-import com.cinema.app.enums.UserRole;
+import com.example.demo.constant.UserRole;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,7 +18,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+@Builder
+public class JUser {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -47,5 +49,5 @@ public class User {
   private UserRole role;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<Reservation> reservations = new HashSet<>();
+  private Set<JReservation> reservations = new HashSet<>();
 }
