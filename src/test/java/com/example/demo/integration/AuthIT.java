@@ -20,10 +20,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Testcontainers
-class AuthIT extends FacadeIT implements PostgresTestContainer{
+class AuthIT extends FacadeIT{
 
   private static final String JWT_SECRET =
       "VGhpc0lzQVN1cGVyU2VjcmV0S2V5VGhhdElzQXRMZWFzdDMyQnl0ZXNMb25nRm9ySFM1MTI=";

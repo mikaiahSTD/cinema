@@ -1,0 +1,644 @@
+openapi: 3.0.3
+info:
+  title: Cinema Reservation API
+  description: >
+    API for managing a cinema: movies, projections (screenings), rooms, seats,
+    reservations, and user authentication (CLIENT, EMPLOYEE, MANAGER).
+  version: 1.0.0
+
+servers:
+  - url: https://thhd2gf6tdz4udyq7miftqz6ly0pvffa.lambda-url.eu-west-3.on.aws/
+    description: AWS
+  - url: http://localhost:9090/
+    description: local
+
+tags:
+  - name: Auth
+    description: User registration and authentication (JWT)
+  - name: Movies
+    description: Movie catalog management
+  - name: Projections
+    description: Screening management (a movie shown in a room at a given time)
+  - name: Reservations
+    description: Seat reservation management
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  # ==========================================================
+  # AUTH
+  # ==========================================================
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Create a user account
+      description: >
+        Creates a new user (CLIENT, EMPLOYEE or MANAGER depending on the `role`
+        field). Public endpoint (no authentication required).
+      operationId: registerUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: User successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: Invalid request body (field validation failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '409':
+          description: A user with this email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "User with email: john.doe@email.com already exists"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate and obtain a JWT token
+      description: >
+        Authenticates the user with email/password and returns a JWT (Bearer)
+        token to be used in the `Authorization` header of subsequent requests.
+        Public endpoint (no authentication required).
+      operationId: createAuthenticationToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid request body (field validation failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Bad credentials"
+
+  # ==========================================================
+  # MOVIES
+  # ==========================================================
+  /movies:
+    get:
+      tags: [Movies]
+      summary: List movies
+      description: Accessible to all authenticated roles (CLIENT, EMPLOYEE, MANAGER).
+      operationId: getMovies
+      responses:
+        '200':
+          description: List of movies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags: [Movies]
+      summary: Create or update a movie
+      description: >
+        Restricted to the MANAGER role. Returns 403 for CLIENT and EMPLOYEE roles.
+      operationId: upsertMovie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieUpsertRequest'
+      responses:
+        '200':
+          description: Movie successfully created or updated (MANAGER only)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Access denied (CLIENT or EMPLOYEE role)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==========================================================
+  # PROJECTIONS
+  # ==========================================================
+  /projections:
+    get:
+      tags: [Projections]
+      summary: List projections
+      description: Accessible to all authenticated roles (CLIENT, EMPLOYEE, MANAGER).
+      operationId: getProjections
+      responses:
+        '200':
+          description: List of projections (returns 200 for every role)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Projection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags: [Projections]
+      summary: Create or update a projection
+      description: >
+        Restricted to the MANAGER role. Returns 403 for CLIENT and EMPLOYEE roles.
+      operationId: upsertProjection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectionUpsertRequest'
+      responses:
+        '200':
+          description: Projection successfully created or updated (MANAGER only)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Projection'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Access denied (CLIENT or EMPLOYEE role)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==========================================================
+  # RESERVATIONS
+  # ==========================================================
+  /reservations:
+    get:
+      tags: [Reservations]
+      summary: List all reservations
+      description: >
+        Restricted to the EMPLOYEE and MANAGER roles. Returns 403 for the CLIENT
+        role (a CLIENT must use `GET /reservations/{id}` to view their own
+        reservations).
+      operationId: getReservations
+      responses:
+        '200':
+          description: List of reservations (EMPLOYEE, MANAGER)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Access denied (CLIENT role)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Reservations]
+      summary: Create or update a reservation
+      description: >
+        Accessible to CLIENT, EMPLOYEE and MANAGER roles. A CLIENT can create or
+        update their own reservation (status `PENDING`), but only an EMPLOYEE
+        (or MANAGER) can move a reservation to the `SUCCESS` status (validate the
+        reservation) or `CANCELED`.
+      operationId: upsertReservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationUpsertRequest'
+      responses:
+        '200':
+          description: Reservation successfully created or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: >
+            Access denied: either the user is trying to modify a reservation
+            that is not their own (CLIENT), or a CLIENT is trying to validate a
+            reservation (status change restricted to EMPLOYEE/MANAGER).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reservations/{id}:
+    get:
+      tags: [Reservations]
+      summary: Get a reservation by its identifier
+      description: >
+        - CLIENT: returns 200 only if the reservation belongs to them, 403 otherwise.
+        - EMPLOYEE and MANAGER: always returns 200.
+      operationId: getReservationById
+      parameters:
+        - $ref: '#/components/parameters/ReservationId'
+      responses:
+        '200':
+          description: Reservation found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Access denied (reservation belonging to another CLIENT)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        JWT token obtained via `POST /auth/login`, to be passed in the
+        `Authorization` header as `Bearer <token>`.
+
+  parameters:
+    ReservationId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Authentication required, or invalid/expired token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    # ---------------- Enums ----------------
+    Genre:
+      type: string
+      enum: [THRILLER, ROMANCE, COMEDY, DRAMA, ACTION, SCI_FI, FANTASY, ANIMATION]
+
+    ReservationStatus:
+      type: string
+      enum: [PENDING, SUCCESS, CANCELED]
+
+    UserRole:
+      type: string
+      enum: [CLIENT, EMPLOYEE, MANAGER]
+
+    # ---------------- Auth DTOs ----------------
+    RegisterRequest:
+      type: object
+      required: [email, password, firstName, lastName, role, birthdate]
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 5
+          maxLength: 255
+          example: john.doe@email.com
+        password:
+          type: string
+          minLength: 8
+          maxLength: 255
+          format: password
+          example: SuperSecret123
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: John
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Doe
+        role:
+          $ref: '#/components/schemas/UserRole'
+        phone:
+          type: string
+          nullable: true
+          example: "+1 202-555-0143"
+        birthdate:
+          type: string
+          format: date
+          example: "1995-05-20"
+
+    RegisterResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: User registered successfully
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 5
+          maxLength: 255
+          example: john.doe@email.com
+        password:
+          type: string
+          minLength: 8
+          maxLength: 255
+          format: password
+          example: SuperSecret123
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type:
+          type: string
+          example: Bearer
+
+    # ---------------- Domain models ----------------
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthdate:
+          type: string
+          format: date
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          nullable: true
+        role:
+          $ref: '#/components/schemas/UserRole'
+
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+
+    Seat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: string
+        roomId:
+          type: string
+          format: uuid
+
+    Movie:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        genres:
+          type: array
+          items:
+            $ref: '#/components/schemas/Genre'
+        description:
+          type: string
+          nullable: true
+        duration:
+          type: string
+          description: Duration in ISO-8601 format (e.g. PT2H15M for 2h15)
+          example: PT2H15M
+
+    MovieUpsertRequest:
+      type: object
+      required: [title, genres, duration]
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Omitted when creating, provided when updating.
+        title:
+          type: string
+          example: Inception
+        genres:
+          type: array
+          items:
+            $ref: '#/components/schemas/Genre'
+        description:
+          type: string
+          nullable: true
+        duration:
+          type: string
+          example: PT2H28M
+
+    Projection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        datetime:
+          type: string
+          format: date-time
+        seatPrice:
+          type: number
+          format: decimal
+          example: 9.50
+        roomId:
+          type: string
+          format: uuid
+        movieId:
+          type: string
+          format: uuid
+
+    ProjectionUpsertRequest:
+      type: object
+      required: [datetime, seatPrice, roomId, movieId]
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Omitted when creating, provided when updating.
+        datetime:
+          type: string
+          format: date-time
+        seatPrice:
+          type: number
+          format: decimal
+          minimum: 0
+        roomId:
+          type: string
+          format: uuid
+        movieId:
+          type: string
+          format: uuid
+
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/ReservationStatus'
+        projectionId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        seatIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ReservationUpsertRequest:
+      type: object
+      required: [projectionId, seatIds]
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Omitted when creating, provided when updating.
+        projectionId:
+          type: string
+          format: uuid
+        seatIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+        status:
+          allOf:
+            - $ref: '#/components/schemas/ReservationStatus'
+          description: >
+            Optional on creation (defaults to PENDING). Only EMPLOYEE and
+            MANAGER are allowed to set this field to SUCCESS or CANCELED.
+
+    # ---------------- Errors ----------------
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Validation failed
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: email
+              message:
+                type: string
+                example: Invalid email format

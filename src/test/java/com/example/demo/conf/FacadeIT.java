@@ -6,13 +6,22 @@ import com.example.demo.PojaGenerated;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+@Testcontainers
 @PojaGenerated
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Slf4j
-public class FacadeIT {
+public abstract class FacadeIT {
+
+  @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
 
   @SneakyThrows
   @DynamicPropertySource
