@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.auth.RegisterRequest;
+import com.example.demo.dto.auth.RegisterResponse;
 import com.example.demo.exception.ConflictException;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.model.User;
@@ -33,7 +34,7 @@ public class UserService implements UserDetailsService {
   }
 
   @Transactional
-  public String createUser(RegisterRequest req) {
+  public RegisterResponse createUser(RegisterRequest req) {
     if (userRepository.existsByEmail(req.email())) {
       throw new ConflictException("User with email: " + req.email() + " already exists");
     }
@@ -43,6 +44,6 @@ public class UserService implements UserDetailsService {
     JUser jUser = userMapper.toJUser(user);
     userRepository.save(jUser);
 
-    return "User created successfully";
+    return RegisterResponse.of("User registered successfully");
   }
 }
