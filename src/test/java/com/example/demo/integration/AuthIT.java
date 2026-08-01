@@ -1,16 +1,24 @@
 package com.example.demo.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNull;
 
 import com.example.demo.conf.FacadeIT;
 import com.example.demo.dto.auth.LoginResponse;
+import com.example.demo.dto.auth.RegisterRequest;
+import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.model.JUser;
+
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 import javax.crypto.SecretKey;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -33,6 +41,8 @@ class AuthIT extends FacadeIT{
 
   @Autowired UserRepository userRepository;
 
+  @Autowired UserMapper userMapper;
+
   @Test
   void register_with_valid_body_returns_200_and_persists_user() {
     String email = "john.doe@example.com";
@@ -40,7 +50,7 @@ class AuthIT extends FacadeIT{
     ResponseEntity<String> response = post(REGISTER_PATH, registerBody(email), String.class);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(response.getBody()).contains("User created successfully");
+    assertThat(response.getBody()).contains("User registered successfully");
     assertThat(userRepository.existsByEmail(email)).isTrue();
   }
 
@@ -180,6 +190,13 @@ class AuthIT extends FacadeIT{
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
   }
 
+  @Test
+        void shouldReturnNullWhenInputIsNull() {
+            assertNull(userMapper.toJUser(null));
+            assertNull(userMapper.toUser((JUser) null));
+            assertNull(userMapper.toUser((RegisterRequest) null));
+        }
+
   private ResponseEntity<String> getProtected(String bearerToken) {
     HttpHeaders headers = new HttpHeaders();
     if (bearerToken != null) {
@@ -226,4 +243,5 @@ class AuthIT extends FacadeIT{
         .signWith(key)
         .compact();
   }
+
 }
