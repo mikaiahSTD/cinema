@@ -19,7 +19,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 public abstract class FacadeIT {
   @Container
   @ServiceConnection
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
+  static PostgreSQLContainer<?> postgres =
+      new PostgreSQLContainer<>("postgres:16").withReuse(true);
 
   @SneakyThrows
   @DynamicPropertySource

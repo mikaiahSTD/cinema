@@ -162,11 +162,11 @@ class AuthIT extends FacadeIT{
 
   @Test
   void protected_endpoint_is_reachable_with_valid_token() {
-    String token = registerAndLogin("protected@example.com");
+    String token = registerAndLoginAs("protected@example.com", "EMPLOYEE");
 
     ResponseEntity<String> response = getProtected(token);
 
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
   }
 
   @Test
@@ -208,6 +208,22 @@ class AuthIT extends FacadeIT{
 
   private String registerAndLogin(String email) {
     restTemplate.postForEntity(REGISTER_PATH, json(registerBody(email)), String.class);
+    ResponseEntity<LoginResponse> login = post(LOGIN_PATH, loginBody(email), LoginResponse.class);
+    assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(login.getBody()).isNotNull();
+    return login.getBody().token();
+  }
+
+  private String registerAndLoginAs(String email, String role) {
+    String body =
+        "{\"email\":\""
+            + email
+            + "\",\"password\":\"password123\",\"firstName\":\"John\","
+            + "\"lastName\":\"Doe\",\"role\":\""
+            + role
+            + "\",\"phone\":\"+261340000000\","
+            + "\"birthdate\":\"1990-05-15\"}";
+    restTemplate.postForEntity(REGISTER_PATH, json(body), String.class);
     ResponseEntity<LoginResponse> login = post(LOGIN_PATH, loginBody(email), LoginResponse.class);
     assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(login.getBody()).isNotNull();
