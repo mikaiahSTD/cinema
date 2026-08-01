@@ -1,5 +1,6 @@
 package com.example.demo.mapper;
 
+import com.example.demo.dto.auth.RegisterRequest;
 import com.example.demo.model.User;
 import com.example.demo.repository.model.JUser;
 import lombok.AllArgsConstructor;
@@ -40,6 +41,21 @@ public class UserMapper {
         .birthdate(jUser.getBirthdate())
         .phone(jUser.getPhone())
         .reservations(jUser.getReservations())
+        .build();
+  }
+
+  public User toUser(RegisterRequest req) {
+    if (req == null) {
+      return null;
+    }
+    return User.builder()
+        .firstName(req.firstName())
+        .lastName(req.lastName())
+        .email(req.email())
+        .password(req.password())
+        .role(req.role())
+        .birthdate(req.birthdate())
+        .phone(req.phone())
         .build();
   }
 }
