@@ -39,9 +39,9 @@ public class ReservationMapper {
 
   public JReservation toJReservation(
       ReservationUpsertRequest req, JReservation reservation, UUID userId) {
-        if(req == null){
-          return null;
-        }
+    if (req == null) {
+      return null;
+    }
     JProjection projection =
         projectionRepository
             .findById(req.projectionId())

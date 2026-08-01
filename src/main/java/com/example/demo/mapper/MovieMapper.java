@@ -26,7 +26,7 @@ public class MovieMapper {
   }
 
   public JMovie toJMovie(MovieUpsertRequest req, JMovie movie) {
-    if(req == null){
+    if (req == null) {
       return null;
     }
     movie.setTitle(req.title());

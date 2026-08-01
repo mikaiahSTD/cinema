@@ -31,7 +31,7 @@ public class ProjectionMapper {
   }
 
   public JProjection toJProjection(ProjectionUpsertRequest req, JProjection projection) {
-    if(req == null){
+    if (req == null) {
       return null;
     }
     JRoom room =

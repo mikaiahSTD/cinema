@@ -62,10 +62,7 @@ class ProjectionsIT extends ControllerIT {
     String body =
         String.format(
             "{\"id\":\"%s\",\"datetime\":\"%s\",\"seatPrice\":12.00,\"roomId\":\"%s\",\"movieId\":\"%s\"}",
-            created.getBody().id(),
-            Instant.now().plusSeconds(7200),
-            room.getId(),
-            movie.getId());
+            created.getBody().id(), Instant.now().plusSeconds(7200), room.getId(), movie.getId());
     ResponseEntity<ProjectionResponse> updated =
         put("/projections", body, token, ProjectionResponse.class);
     assertThat(updated.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -91,7 +88,8 @@ class ProjectionsIT extends ControllerIT {
     String token = registerAndLogin("proj-client-create@example.com", "CLIENT");
     JRoom room = saveRoom("R-" + UUID.randomUUID(), 50);
     JMovie movie = saveMovie("Avatar");
-    ResponseEntity<Map> response = put("/projections", projectionBody(room, movie), token, Map.class);
+    ResponseEntity<Map> response =
+        put("/projections", projectionBody(room, movie), token, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
   }
 
@@ -118,10 +116,11 @@ class ProjectionsIT extends ControllerIT {
     ResponseEntity<Map> response = put("/projections", body, token, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
+
   @Test
-        void shouldReturnNullWhenInputIsNull() {
-          JProjection jProjection = new JProjection();
-            assertNull(projectionMapper.toResponse(null));
-            assertNull(projectionMapper.toJProjection(null,jProjection));
-        }
+  void shouldReturnNullWhenInputIsNull() {
+    JProjection jProjection = new JProjection();
+    assertNull(projectionMapper.toResponse(null));
+    assertNull(projectionMapper.toJProjection(null, jProjection));
+  }
 }

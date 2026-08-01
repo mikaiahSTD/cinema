@@ -4,6 +4,7 @@ import com.example.demo.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -48,7 +49,7 @@ public class SecurityConfig {
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/auth/**")
+                auth.requestMatchers("/auth/register", "/auth/login")
                     .anonymous()
                     .requestMatchers("/ping")
                     .anonymous()
@@ -56,6 +57,10 @@ public class SecurityConfig {
                     .anonymous()
                     .requestMatchers("/health/bucket")
                     .anonymous()
+                    .requestMatchers(HttpMethod.PUT, "/movies", "/projections")
+                    .hasRole("MANAGER")
+                    .requestMatchers(HttpMethod.GET, "/reservations")
+                    .hasAnyRole("EMPLOYEE", "MANAGER")
                     .anyRequest()
                     .authenticated())
         .authenticationProvider(authenticationProvider)

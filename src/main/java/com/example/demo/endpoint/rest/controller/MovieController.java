@@ -2,13 +2,11 @@ package com.example.demo.endpoint.rest.controller;
 
 import com.example.demo.dto.movie.MovieResponse;
 import com.example.demo.dto.movie.MovieUpsertRequest;
-import com.example.demo.security.UserPrincipal;
 import com.example.demo.service.MovieService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,9 +26,7 @@ public class MovieController {
   }
 
   @PutMapping
-  public ResponseEntity<MovieResponse> upsertMovie(
-      @RequestBody @Valid MovieUpsertRequest req,
-      @AuthenticationPrincipal UserPrincipal principal) {
-    return ResponseEntity.ok().body(movieService.upsertMovie(req, principal.getUser()));
+  public ResponseEntity<MovieResponse> upsertMovie(@RequestBody @Valid MovieUpsertRequest req) {
+    return ResponseEntity.ok().body(movieService.upsertMovie(req));
   }
 }

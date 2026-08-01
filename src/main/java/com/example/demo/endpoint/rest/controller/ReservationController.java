@@ -25,16 +25,14 @@ public class ReservationController {
   private ReservationService reservationService;
 
   @GetMapping
-  public ResponseEntity<List<ReservationResponse>> getReservations(
-      @AuthenticationPrincipal UserPrincipal principal) {
-    return ResponseEntity.ok().body(reservationService.getAllReservations(principal.getUser()));
+  public ResponseEntity<List<ReservationResponse>> getReservations() {
+    return ResponseEntity.ok().body(reservationService.getAllReservations());
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<ReservationResponse> getReservationById(
       @PathVariable UUID id, @AuthenticationPrincipal UserPrincipal principal) {
-    return ResponseEntity.ok()
-        .body(reservationService.getReservationById(id, principal.getUser()));
+    return ResponseEntity.ok().body(reservationService.getReservationById(id, principal.getUser()));
   }
 
   @PutMapping

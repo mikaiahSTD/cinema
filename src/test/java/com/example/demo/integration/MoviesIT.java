@@ -4,11 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNull;
 
 import com.example.demo.constant.Genre;
-import com.example.demo.dto.auth.RegisterRequest;
 import com.example.demo.dto.movie.MovieResponse;
 import com.example.demo.repository.model.JMovie;
-import com.example.demo.repository.model.JUser;
-
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -109,10 +106,11 @@ class MoviesIT extends ControllerIT {
     ResponseEntity<Map> response = put("/movies", body, token, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
+
   @Test
-        void shouldReturnNullWhenInputIsNull() {
-          JMovie jMovie = new JMovie();
-            assertNull(movieMapper.toResponse(null));
-            assertNull(movieMapper.toJMovie(null,jMovie));
-        }
+  void shouldReturnNullWhenInputIsNull() {
+    JMovie jMovie = new JMovie();
+    assertNull(movieMapper.toResponse(null));
+    assertNull(movieMapper.toJMovie(null, jMovie));
+  }
 }

@@ -25,11 +25,7 @@ public class ReservationService {
   private ReservationMapper reservationMapper;
 
   @Transactional
-  public List<ReservationResponse> getAllReservations(User currentUser) {
-    if (currentUser.getRole() == UserRole.CLIENT) {
-      throw new ForbiddenException(
-          "Access denied: only EMPLOYEE or MANAGER can list all reservations");
-    }
+  public List<ReservationResponse> getAllReservations() {
     return reservationRepository.findAll().stream().map(reservationMapper::toResponse).toList();
   }
 
@@ -59,7 +55,8 @@ public class ReservationService {
       reservation =
           reservationRepository
               .findById(req.id())
-              .orElseThrow(() -> new NotFoundException("Reservation not found with id: " + req.id()));
+              .orElseThrow(
+                  () -> new NotFoundException("Reservation not found with id: " + req.id()));
       if (!isStaff && !reservation.getUser().getId().equals(currentUser.getId())) {
         throw new ForbiddenException(
             "Access denied: cannot modify a reservation that is not your own");

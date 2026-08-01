@@ -5,9 +5,7 @@ import static org.junit.Assert.assertNull;
 
 import com.example.demo.constant.ReservationStatus;
 import com.example.demo.dto.reservation.ReservationResponse;
-import com.example.demo.repository.model.JProjection;
 import com.example.demo.repository.model.JReservation;
-
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -62,8 +60,7 @@ class ReservationsIT extends ControllerIT {
     TestData data = seed();
     ResponseEntity<ReservationResponse> created =
         put("/reservations", reservationBody(data, null), tokenA, ReservationResponse.class);
-    ResponseEntity<Map> fetched =
-        get("/reservations/" + created.getBody().id(), tokenB, Map.class);
+    ResponseEntity<Map> fetched = get("/reservations/" + created.getBody().id(), tokenB, Map.class);
     assertThat(fetched.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
   }
 
@@ -135,11 +132,7 @@ class ReservationsIT extends ControllerIT {
     ResponseEntity<ReservationResponse> created =
         put("/reservations", reservationBody(data, null), tokenA, ReservationResponse.class);
     ResponseEntity<Map> response =
-        put(
-            "/reservations",
-            updateBody(data, created.getBody().id(), null),
-            tokenB,
-            Map.class);
+        put("/reservations", updateBody(data, created.getBody().id(), null), tokenB, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
   }
 
@@ -163,8 +156,7 @@ class ReservationsIT extends ControllerIT {
   @Test
   void get_unknown_reservation_returns_404() {
     String token = registerAndLogin("res-employee-404@example.com", "EMPLOYEE");
-    ResponseEntity<Map> response =
-        get("/reservations/" + UUID.randomUUID(), token, Map.class);
+    ResponseEntity<Map> response = get("/reservations/" + UUID.randomUUID(), token, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
 
@@ -173,11 +165,7 @@ class ReservationsIT extends ControllerIT {
     String token = registerAndLogin("res-client-400@example.com", "CLIENT");
     TestData data = seed();
     ResponseEntity<Map> response =
-        put(
-            "/reservations",
-            "{\"seatIds\":[\"" + data.seat().getId() + "\"]}",
-            token,
-            Map.class);
+        put("/reservations", "{\"seatIds\":[\"" + data.seat().getId() + "\"]}", token, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
 
@@ -194,10 +182,11 @@ class ReservationsIT extends ControllerIT {
     ResponseEntity<Map> response = put("/reservations", body, token, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
+
   @Test
-        void shouldReturnNullWhenInputIsNull() {
-          JReservation jReservation = new JReservation();
-            assertNull(reservationMapper.toResponse(null));
-            assertNull(reservationMapper.toJReservation(null,jReservation,UUID.randomUUID()));
-        }
+  void shouldReturnNullWhenInputIsNull() {
+    JReservation jReservation = new JReservation();
+    assertNull(reservationMapper.toResponse(null));
+    assertNull(reservationMapper.toJReservation(null, jReservation, UUID.randomUUID()));
+  }
 }

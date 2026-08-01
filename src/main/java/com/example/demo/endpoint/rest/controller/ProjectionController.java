@@ -2,13 +2,11 @@ package com.example.demo.endpoint.rest.controller;
 
 import com.example.demo.dto.projection.ProjectionResponse;
 import com.example.demo.dto.projection.ProjectionUpsertRequest;
-import com.example.demo.security.UserPrincipal;
 import com.example.demo.service.ProjectionService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,8 +27,7 @@ public class ProjectionController {
 
   @PutMapping
   public ResponseEntity<ProjectionResponse> upsertProjection(
-      @RequestBody @Valid ProjectionUpsertRequest req,
-      @AuthenticationPrincipal UserPrincipal principal) {
-    return ResponseEntity.ok().body(projectionService.upsertProjection(req, principal.getUser()));
+      @RequestBody @Valid ProjectionUpsertRequest req) {
+    return ResponseEntity.ok().body(projectionService.upsertProjection(req));
   }
 }

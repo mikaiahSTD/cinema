@@ -1,12 +1,9 @@
 package com.example.demo.service;
 
-import com.example.demo.constant.UserRole;
 import com.example.demo.dto.movie.MovieResponse;
 import com.example.demo.dto.movie.MovieUpsertRequest;
-import com.example.demo.exception.ForbiddenException;
 import com.example.demo.exception.NotFoundException;
 import com.example.demo.mapper.MovieMapper;
-import com.example.demo.model.User;
 import com.example.demo.repository.MovieRepository;
 import com.example.demo.repository.model.JMovie;
 import jakarta.transaction.Transactional;
@@ -26,10 +23,7 @@ public class MovieService {
   }
 
   @Transactional
-  public MovieResponse upsertMovie(MovieUpsertRequest req, User currentUser) {
-    if (currentUser.getRole() != UserRole.MANAGER) {
-      throw new ForbiddenException("Access denied: only MANAGER can create or update movies");
-    }
+  public MovieResponse upsertMovie(MovieUpsertRequest req) {
     JMovie movie;
     if (req.id() != null) {
       movie =
