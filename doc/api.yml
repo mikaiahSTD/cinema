@@ -434,6 +434,84 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+    put:
+      tags: [Reservations]
+      summary: Validate a reservation (PENDING to SUCCESS)
+      description: >
+        Restricted to the MANAGER role. Marks the reservation as SUCCESS only if
+        the projection's room has enough remaining capacity. Returns 409 if the
+        capacity would be exceeded, if the reservation is already validated, or
+        if the reservation is canceled.
+      operationId: validateReservation
+      parameters:
+        - $ref: '#/components/parameters/ReservationId'
+      responses:
+        '200':
+          description: Reservation successfully validated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Access denied (CLIENT or EMPLOYEE role)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Room capacity exceeded or invalid reservation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reservations/{id}/cancel:
+    put:
+      tags: [Reservations]
+      summary: Cancel a reservation
+      description: >
+        Restricted to the MANAGER role. Marks the reservation as CANCELED,
+        freeing the reserved seats in the room. Returns 409 if the reservation
+        is already canceled.
+      operationId: cancelReservation
+      parameters:
+        - $ref: '#/components/parameters/ReservationId'
+      responses:
+        '200':
+          description: Reservation successfully canceled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Access denied (CLIENT or EMPLOYEE role)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Reservation is already canceled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
     delete:
       tags: [Reservations]
       summary: Delete a reservation

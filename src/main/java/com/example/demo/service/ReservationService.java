@@ -4,6 +4,7 @@ import com.example.demo.constant.ReservationStatus;
 import com.example.demo.constant.UserRole;
 import com.example.demo.dto.reservation.ReservationResponse;
 import com.example.demo.dto.reservation.ReservationUpsertRequest;
+import com.example.demo.exception.ConflictException;
 import com.example.demo.exception.ForbiddenException;
 import com.example.demo.exception.NotFoundException;
 import com.example.demo.mapper.ReservationMapper;
@@ -85,5 +86,53 @@ public class ReservationService {
             .findById(id)
             .orElseThrow(() -> new NotFoundException("Reservation not found with id: " + id));
     reservationRepository.delete(reservation);
+  }
+
+  @Transactional
+  public ReservationResponse validateReservation(UUID id) {
+    JReservation reservation =
+        reservationRepository
+            .findById(id)
+            .orElseThrow(() -> new NotFoundException("Reservation not found with id: " + id));
+    if (reservation.getStatus() == ReservationStatus.SUCCESS) {
+      throw new ConflictException("Reservation is already validated");
+    }
+    if (reservation.getStatus() == ReservationStatus.CANCELED) {
+      throw new ConflictException("Cannot validate a canceled reservation");
+    }
+
+    int roomCapacity = reservation.getProjection().getRoom().getCapacity();
+    long validatedSeats =
+        reservation.getProjection().getReservations().stream()
+            .filter(r -> r.getStatus() == ReservationStatus.SUCCESS)
+            .mapToLong(r -> r.getSeats().size())
+            .sum();
+    long requestedSeats = reservation.getSeats().size();
+    if (validatedSeats + requestedSeats > roomCapacity) {
+      throw new ConflictException(
+          "Cannot validate reservation: room capacity exceeded (capacity="
+              + roomCapacity
+              + ", already validated seats="
+              + validatedSeats
+              + ", requested seats="
+              + requestedSeats
+              + ")");
+    }
+
+    reservation.setStatus(ReservationStatus.SUCCESS);
+    return reservationMapper.toResponse(reservationRepository.save(reservation));
+  }
+
+  @Transactional
+  public ReservationResponse cancelReservation(UUID id) {
+    JReservation reservation =
+        reservationRepository
+            .findById(id)
+            .orElseThrow(() -> new NotFoundException("Reservation not found with id: " + id));
+    if (reservation.getStatus() == ReservationStatus.CANCELED) {
+      throw new ConflictException("Reservation is already canceled");
+    }
+    reservation.setStatus(ReservationStatus.CANCELED);
+    return reservationMapper.toResponse(reservationRepository.save(reservation));
   }
 }

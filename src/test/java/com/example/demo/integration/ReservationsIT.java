@@ -6,7 +6,11 @@ import static org.junit.Assert.assertNull;
 import com.example.demo.constant.ReservationStatus;
 import com.example.demo.dto.reservation.ReservationResponse;
 import com.example.demo.pageable.Page;
+import com.example.demo.repository.model.JMovie;
+import com.example.demo.repository.model.JProjection;
 import com.example.demo.repository.model.JReservation;
+import com.example.demo.repository.model.JRoom;
+import com.example.demo.repository.model.JSeat;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -25,6 +29,23 @@ class ReservationsIT extends ControllerIT {
     return String.format(
         "{\"projectionId\":\"%s\",\"seatIds\":[\"%s\"]%s}",
         data.projection().getId(), data.seat().getId(), statusPart);
+  }
+
+  private static String reservationBody(JProjection projection, JSeat seat) {
+    return String.format(
+        "{\"projectionId\":\"%s\",\"seatIds\":[\"%s\"]}", projection.getId(), seat.getId());
+  }
+
+  private record SeededData(JRoom room, JSeat seatA, JSeat seatB, JMovie movie,
+      JProjection projection) {}
+
+  private SeededData seedWithCapacity(int capacity) {
+    JRoom room = saveRoom("R-cap-" + UUID.randomUUID(), capacity);
+    JSeat seatA = saveSeat(room, "A1");
+    JSeat seatB = saveSeat(room, "A2");
+    JMovie movie = saveMovie("Capacity-Movie-" + UUID.randomUUID());
+    JProjection projection = saveProjection(room, movie);
+    return new SeededData(room, seatA, seatB, movie, projection);
   }
 
   private static String updateBody(TestData data, UUID reservationId, String status) {
@@ -262,6 +283,194 @@ class ReservationsIT extends ControllerIT {
             + "\"]}";
     ResponseEntity<Map> response = put("/reservations", body, token, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+  }
+
+  @Test
+  void manager_can_validate_reservation() {
+    String clientToken = registerAndLogin("res-validate-client@example.com", CLIENT);
+    String managerToken = registerAndLogin("res-validate-mgr@example.com", MANAGER);
+    TestData data = seed();
+    ResponseEntity<ReservationResponse> created =
+        put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
+    ResponseEntity<ReservationResponse> validated =
+        put("/reservations/" + created.getBody().id() + "/validate", "", managerToken,
+            ReservationResponse.class);
+    assertThat(validated.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(validated.getBody().status()).isEqualTo(ReservationStatus.SUCCESS);
+  }
+
+  @Test
+  void validate_reservation_insufficient_capacity_returns_409() {
+    String clientToken = registerAndLogin("res-cap-client@example.com", CLIENT);
+    String managerToken = registerAndLogin("res-cap-mgr@example.com", MANAGER);
+    SeededData data = seedWithCapacity(1);
+
+    ResponseEntity<ReservationResponse> first =
+        put("/reservations", reservationBody(data.projection(), data.seatA()), clientToken,
+            ReservationResponse.class);
+    ResponseEntity<ReservationResponse> validated =
+        put("/reservations/" + first.getBody().id() + "/validate", "", managerToken,
+            ReservationResponse.class);
+    assertThat(validated.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(validated.getBody().status()).isEqualTo(ReservationStatus.SUCCESS);
+
+    ResponseEntity<ReservationResponse> second =
+        put("/reservations", reservationBody(data.projection(), data.seatB()), clientToken,
+            ReservationResponse.class);
+    ResponseEntity<Map> tooMany =
+        put("/reservations/" + second.getBody().id() + "/validate", "", managerToken, Map.class);
+    assertThat(tooMany.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(tooMany.getBody()).extracting("error").isEqualTo("CONFLICT");
+  }
+
+  @Test
+  void cancel_validated_reservation_frees_capacity() {
+    String clientToken = registerAndLogin("res-free-client@example.com", CLIENT);
+    String managerToken = registerAndLogin("res-free-mgr@example.com", MANAGER);
+    SeededData data = seedWithCapacity(1);
+
+    ResponseEntity<ReservationResponse> first =
+        put("/reservations", reservationBody(data.projection(), data.seatA()), clientToken,
+            ReservationResponse.class);
+    put("/reservations/" + first.getBody().id() + "/validate", "", managerToken,
+        ReservationResponse.class);
+
+    ResponseEntity<ReservationResponse> second =
+        put("/reservations", reservationBody(data.projection(), data.seatB()), clientToken,
+            ReservationResponse.class);
+    ResponseEntity<Map> blocked =
+        put("/reservations/" + second.getBody().id() + "/validate", "", managerToken, Map.class);
+    assertThat(blocked.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+
+    ResponseEntity<ReservationResponse> canceled =
+        put("/reservations/" + first.getBody().id() + "/cancel", "", managerToken,
+            ReservationResponse.class);
+    assertThat(canceled.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(canceled.getBody().status()).isEqualTo(ReservationStatus.CANCELED);
+
+    ResponseEntity<ReservationResponse> nowValid =
+        put("/reservations/" + second.getBody().id() + "/validate", "", managerToken,
+            ReservationResponse.class);
+    assertThat(nowValid.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(nowValid.getBody().status()).isEqualTo(ReservationStatus.SUCCESS);
+  }
+
+  @Test
+  void validate_already_validated_returns_409() {
+    String clientToken = registerAndLogin("res-revalidate-client@example.com", CLIENT);
+    String managerToken = registerAndLogin("res-revalidate-mgr@example.com", MANAGER);
+    TestData data = seed();
+    ResponseEntity<ReservationResponse> created =
+        put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
+    put("/reservations/" + created.getBody().id() + "/validate", "", managerToken,
+        ReservationResponse.class);
+    ResponseEntity<Map> again =
+        put("/reservations/" + created.getBody().id() + "/validate", "", managerToken, Map.class);
+    assertThat(again.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+  }
+
+  @Test
+  void validate_canceled_reservation_returns_409() {
+    String clientToken = registerAndLogin("res-valcancel-client@example.com", CLIENT);
+    String managerToken = registerAndLogin("res-valcancel-mgr@example.com", MANAGER);
+    TestData data = seed();
+    ResponseEntity<ReservationResponse> created =
+        put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
+    put("/reservations/" + created.getBody().id() + "/cancel", "", managerToken,
+        ReservationResponse.class);
+    ResponseEntity<Map> validated =
+        put("/reservations/" + created.getBody().id() + "/validate", "", managerToken, Map.class);
+    assertThat(validated.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+  }
+
+  @Test
+  void validate_unknown_reservation_returns_404() {
+    String token = registerAndLogin("res-val404@example.com", MANAGER);
+    ResponseEntity<Map> response =
+        put("/reservations/" + UUID.randomUUID() + "/validate", "", token, Map.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+  }
+
+  @Test
+  void client_cannot_validate_via_management_endpoint() {
+    String clientToken = registerAndLogin("res-valforbid-client@example.com", CLIENT);
+    TestData data = seed();
+    ResponseEntity<ReservationResponse> created =
+        put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
+    ResponseEntity<Map> response =
+        put("/reservations/" + created.getBody().id() + "/validate", "", clientToken, Map.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+  }
+
+  @Test
+  void employee_cannot_validate_reservation() {
+    String clientToken = registerAndLogin("res-valemp-client@example.com", CLIENT);
+    String employeeToken = registerAndLogin("res-valemp@example.com", EMPLOYEE);
+    TestData data = seed();
+    ResponseEntity<ReservationResponse> created =
+        put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
+    ResponseEntity<Map> response =
+        put("/reservations/" + created.getBody().id() + "/validate", "", employeeToken, Map.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+  }
+
+  @Test
+  void manager_can_cancel_reservation() {
+    String clientToken = registerAndLogin("res-cancel-client@example.com", CLIENT);
+    String managerToken = registerAndLogin("res-cancel-mgr@example.com", MANAGER);
+    TestData data = seed();
+    ResponseEntity<ReservationResponse> created =
+        put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
+    ResponseEntity<ReservationResponse> canceled =
+        put("/reservations/" + created.getBody().id() + "/cancel", "", managerToken,
+            ReservationResponse.class);
+    assertThat(canceled.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(canceled.getBody().status()).isEqualTo(ReservationStatus.CANCELED);
+  }
+
+  @Test
+  void cancel_already_canceled_returns_409() {
+    String clientToken = registerAndLogin("res-recancel-client@example.com", CLIENT);
+    String managerToken = registerAndLogin("res-recancel-mgr@example.com", MANAGER);
+    TestData data = seed();
+    ResponseEntity<ReservationResponse> created =
+        put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
+    put("/reservations/" + created.getBody().id() + "/cancel", "", managerToken,
+        ReservationResponse.class);
+    ResponseEntity<Map> again =
+        put("/reservations/" + created.getBody().id() + "/cancel", "", managerToken, Map.class);
+    assertThat(again.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+  }
+
+  @Test
+  void cancel_unknown_reservation_returns_404() {
+    String token = registerAndLogin("res-cancel404@example.com", MANAGER);
+    ResponseEntity<Map> response =
+        put("/reservations/" + UUID.randomUUID() + "/cancel", "", token, Map.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+  }
+
+  @Test
+  void client_cannot_cancel_via_management_endpoint() {
+    String clientToken = registerAndLogin("res-cancelforbid-client@example.com", CLIENT);
+    TestData data = seed();
+    ResponseEntity<ReservationResponse> created =
+        put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
+    ResponseEntity<Map> response =
+        put("/reservations/" + created.getBody().id() + "/cancel", "", clientToken, Map.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+  }
+
+  @Test
+  void employee_cannot_cancel_reservation() {
+    String clientToken = registerAndLogin("res-cancelemp-client@example.com", CLIENT);
+    String employeeToken = registerAndLogin("res-cancelemp@example.com", EMPLOYEE);
+    TestData data = seed();
+    ResponseEntity<ReservationResponse> created =
+        put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
+    ResponseEntity<Map> response =
+        put("/reservations/" + created.getBody().id() + "/cancel", "", employeeToken, Map.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
   }
 
   @Test
