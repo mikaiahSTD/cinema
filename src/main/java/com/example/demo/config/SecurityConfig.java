@@ -68,6 +68,9 @@ public class SecurityConfig {
                         "/reservations",
                         "/reservations/*")
                     .hasRole("MANAGER")
+                    .requestMatchers(
+                        HttpMethod.PUT, "/reservations/*/validate", "/reservations/*/cancel")
+                    .hasRole("MANAGER")
                     .requestMatchers(HttpMethod.GET, "/reservations")
                     .hasAnyRole("EMPLOYEE", "MANAGER")
                     .anyRequest()

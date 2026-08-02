@@ -55,4 +55,14 @@ public class ReservationController {
     reservationService.deleteReservation(id);
     return ResponseEntity.ok().build();
   }
+
+  @PutMapping("/{id}/validate")
+  public ResponseEntity<ReservationResponse> validateReservation(@PathVariable UUID id) {
+    return ResponseEntity.ok().body(reservationService.validateReservation(id));
+  }
+
+  @PutMapping("/{id}/cancel")
+  public ResponseEntity<ReservationResponse> cancelReservation(@PathVariable UUID id) {
+    return ResponseEntity.ok().body(reservationService.cancelReservation(id));
+  }
 }
