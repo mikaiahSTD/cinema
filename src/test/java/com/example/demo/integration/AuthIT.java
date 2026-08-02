@@ -1,10 +1,13 @@
 package com.example.demo.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNull;
 
-import com.example.demo.conf.FacadeIT;
 import com.example.demo.dto.auth.LoginResponse;
+import com.example.demo.dto.auth.RegisterRequest;
+import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.model.JUser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.util.Base64;
@@ -21,7 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-class AuthIT extends FacadeIT {
+class AuthIT extends ControllerIT {
 
   private static final String JWT_SECRET =
       "VGhpc0lzQVN1cGVyU2VjcmV0S2V5VGhhdElzQXRMZWFzdDMyQnl0ZXNMb25nRm9ySFM1MTI=";
@@ -33,6 +36,8 @@ class AuthIT extends FacadeIT {
 
   @Autowired UserRepository userRepository;
 
+  @Autowired UserMapper userMapper;
+
   @Test
   void register_with_valid_body_returns_200_and_persists_user() {
     String email = "john.doe@example.com";
@@ -40,7 +45,7 @@ class AuthIT extends FacadeIT {
     ResponseEntity<String> response = post(REGISTER_PATH, registerBody(email), String.class);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(response.getBody()).contains("User created successfully");
+    assertThat(response.getBody()).contains("User registered successfully");
     assertThat(userRepository.existsByEmail(email)).isTrue();
   }
 
@@ -149,11 +154,11 @@ class AuthIT extends FacadeIT {
 
   @Test
   void protected_endpoint_is_reachable_with_valid_token() {
-    String token = registerAndLogin("protected@example.com");
+    String token = registerAndLoginAs("protected@example.com", "EMPLOYEE");
 
     ResponseEntity<String> response = getProtected(token);
 
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
   }
 
   @Test
@@ -177,6 +182,13 @@ class AuthIT extends FacadeIT {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
   }
 
+  @Test
+  void shouldReturnNullWhenInputIsNull() {
+    assertNull(userMapper.toJUser(null));
+    assertNull(userMapper.toUser((JUser) null));
+    assertNull(userMapper.toUser((RegisterRequest) null));
+  }
+
   private ResponseEntity<String> getProtected(String bearerToken) {
     HttpHeaders headers = new HttpHeaders();
     if (bearerToken != null) {
@@ -194,7 +206,23 @@ class AuthIT extends FacadeIT {
     return login.getBody().token();
   }
 
-  private static HttpEntity<String> json(String body) {
+  private String registerAndLoginAs(String email, String role) {
+    String body =
+        "{\"email\":\""
+            + email
+            + "\",\"password\":\"password123\",\"firstName\":\"John\","
+            + "\"lastName\":\"Doe\",\"role\":\""
+            + role
+            + "\",\"phone\":\"+261340000000\","
+            + "\"birthdate\":\"1990-05-15\"}";
+    restTemplate.postForEntity(REGISTER_PATH, json(body), String.class);
+    ResponseEntity<LoginResponse> login = post(LOGIN_PATH, loginBody(email), LoginResponse.class);
+    assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(login.getBody()).isNotNull();
+    return login.getBody().token();
+  }
+
+  protected static HttpEntity<String> json(String body) {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     return new HttpEntity<>(body, headers);
