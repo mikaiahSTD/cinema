@@ -86,7 +86,10 @@ class ProjectionsIT extends ControllerIT {
     JMovie movie = saveMovie("Joker");
     put("/projections", projectionBody(room, movie), managerToken, ProjectionResponse.class);
     ResponseEntity<Page<ProjectionResponse>> response =
-        get("/projections", clientToken, new ParameterizedTypeReference<Page<ProjectionResponse>>() {});
+        get(
+            "/projections",
+            clientToken,
+            new ParameterizedTypeReference<Page<ProjectionResponse>>() {});
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(response.getBody().content()).isNotEmpty();
   }
@@ -102,7 +105,9 @@ class ProjectionsIT extends ControllerIT {
     }
 
     ResponseEntity<Page<ProjectionResponse>> first =
-        get("/projections?page=0&pageSize=2", clientToken,
+        get(
+            "/projections?page=0&pageSize=2",
+            clientToken,
             new ParameterizedTypeReference<Page<ProjectionResponse>>() {});
     assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(first.getBody().content()).hasSize(2);
@@ -145,7 +150,8 @@ class ProjectionsIT extends ControllerIT {
     JMovie movie = saveMovie("Delete-Proj");
     ResponseEntity<ProjectionResponse> created =
         put("/projections", projectionBody(room, movie), token, ProjectionResponse.class);
-    ResponseEntity<Void> response = delete("/projections/" + created.getBody().id(), token, Void.class);
+    ResponseEntity<Void> response =
+        delete("/projections/" + created.getBody().id(), token, Void.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     ResponseEntity<Map> gone = get("/projections/" + created.getBody().id(), token, Map.class);
     assertThat(gone.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);

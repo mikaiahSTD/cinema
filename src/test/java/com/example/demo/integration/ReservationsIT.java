@@ -89,7 +89,10 @@ class ReservationsIT extends ControllerIT {
     TestData data = seed();
     put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
     ResponseEntity<Page<ReservationResponse>> response =
-        get("/reservations", employeeToken, new ParameterizedTypeReference<Page<ReservationResponse>>() {});
+        get(
+            "/reservations",
+            employeeToken,
+            new ParameterizedTypeReference<Page<ReservationResponse>>() {});
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(response.getBody()).isNotNull();
     assertThat(response.getBody().content()).hasSizeGreaterThanOrEqualTo(1);
@@ -107,7 +110,9 @@ class ReservationsIT extends ControllerIT {
     put("/reservations", reservationBody(data3, null), clientToken, ReservationResponse.class);
 
     ResponseEntity<Page<ReservationResponse>> response =
-        get("/reservations?page=0&pageSize=2", employeeToken,
+        get(
+            "/reservations?page=0&pageSize=2",
+            employeeToken,
             new ParameterizedTypeReference<Page<ReservationResponse>>() {});
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(response.getBody().content()).hasSize(2);
@@ -141,7 +146,8 @@ class ReservationsIT extends ControllerIT {
     ResponseEntity<Map> response =
         delete("/reservations/" + created.getBody().id(), clientToken, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    assertThat(get("/reservations/" + created.getBody().id(), managerToken, Map.class).getStatusCode())
+    assertThat(
+            get("/reservations/" + created.getBody().id(), managerToken, Map.class).getStatusCode())
         .isEqualTo(HttpStatus.OK);
   }
 

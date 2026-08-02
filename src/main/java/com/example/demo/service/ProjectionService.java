@@ -29,8 +29,7 @@ public class ProjectionService {
     JProjection projection =
         projectionRepository
             .findById(id)
-            .orElseThrow(
-                () -> new NotFoundException("Projection not found with id: " + id));
+            .orElseThrow(() -> new NotFoundException("Projection not found with id: " + id));
     return projectionMapper.toResponse(projection);
   }
 
@@ -39,8 +38,7 @@ public class ProjectionService {
     JProjection projection =
         projectionRepository
             .findById(id)
-            .orElseThrow(
-                () -> new NotFoundException("Projection not found with id: " + id));
+            .orElseThrow(() -> new NotFoundException("Projection not found with id: " + id));
     if (!projection.getReservations().isEmpty()) {
       throw new ConflictException("Cannot delete projection with existing reservations");
     }

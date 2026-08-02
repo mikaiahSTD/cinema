@@ -26,7 +26,8 @@ class MoviesIT extends ControllerIT {
   }
 
   private String createMovie(String title) {
-    String token = registerAndLogin("movies-manager-" + System.nanoTime() + "@example.com", MANAGER);
+    String token =
+        registerAndLogin("movies-manager-" + System.nanoTime() + "@example.com", MANAGER);
     return put("/movies", movieBody(title), token, MovieResponse.class).getBody().id().toString();
   }
 
@@ -103,7 +104,10 @@ class MoviesIT extends ControllerIT {
     createMovie("Page-Movie-C");
 
     ResponseEntity<Page<MovieResponse>> first =
-        get("/movies?page=0&pageSize=2", token, new ParameterizedTypeReference<Page<MovieResponse>>() {});
+        get(
+            "/movies?page=0&pageSize=2",
+            token,
+            new ParameterizedTypeReference<Page<MovieResponse>>() {});
     assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(first.getBody().content()).hasSize(2);
     assertThat(first.getBody().page()).isZero();
@@ -112,7 +116,10 @@ class MoviesIT extends ControllerIT {
     assertThat(first.getBody().totalPages()).isGreaterThanOrEqualTo(2);
 
     ResponseEntity<Page<MovieResponse>> second =
-        get("/movies?page=1&pageSize=2", token, new ParameterizedTypeReference<Page<MovieResponse>>() {});
+        get(
+            "/movies?page=1&pageSize=2",
+            token,
+            new ParameterizedTypeReference<Page<MovieResponse>>() {});
     assertThat(second.getBody().content()).isNotEmpty();
     assertThat(second.getBody().page()).isEqualTo(1);
   }
@@ -130,15 +137,13 @@ class MoviesIT extends ControllerIT {
   @Test
   void get_movie_by_id_returns_404() {
     String token = registerAndLogin("movies-getbyid-404@example.com", CLIENT);
-    ResponseEntity<Map> response =
-        get("/movies/" + UUID.randomUUID(), token, Map.class);
+    ResponseEntity<Map> response = get("/movies/" + UUID.randomUUID(), token, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
 
   @Test
   void get_movie_by_id_requires_authentication() {
-    ResponseEntity<Map> response =
-        get("/movies/" + UUID.randomUUID(), null, Map.class);
+    ResponseEntity<Map> response = get("/movies/" + UUID.randomUUID(), null, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
   }
 
@@ -174,8 +179,7 @@ class MoviesIT extends ControllerIT {
   @Test
   void delete_movie_not_found_returns_404() {
     String token = registerAndLogin("movies-del-404@example.com", MANAGER);
-    ResponseEntity<Map> response =
-        delete("/movies/" + UUID.randomUUID(), token, Map.class);
+    ResponseEntity<Map> response = delete("/movies/" + UUID.randomUUID(), token, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
 

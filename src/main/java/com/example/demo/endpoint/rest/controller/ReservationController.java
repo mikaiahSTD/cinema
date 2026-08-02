@@ -32,8 +32,7 @@ public class ReservationController {
 
   @GetMapping
   public ResponseEntity<Page<ReservationResponse>> getReservations(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int pageSize) {
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int pageSize) {
     Pageable pageable = PageRequest.of(page, Math.min(pageSize, MAX_PAGE_SIZE));
     return ResponseEntity.ok().body(reservationService.getAllReservations(pageable));
   }
