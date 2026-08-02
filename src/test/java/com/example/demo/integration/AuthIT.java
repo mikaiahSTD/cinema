@@ -21,7 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-class AuthIT extends FacadeIT{
+class AuthIT extends FacadeIT {
 
   private static final String JWT_SECRET =
       "VGhpc0lzQVN1cGVyU2VjcmV0S2V5VGhhdElzQXRMZWFzdDMyQnl0ZXNMb25nRm9ySFM1MTI=";
@@ -103,7 +103,8 @@ class AuthIT extends FacadeIT{
     String email = "login@example.com";
     restTemplate.postForEntity(REGISTER_PATH, json(registerBody(email)), String.class);
 
-    ResponseEntity<LoginResponse> response = post(LOGIN_PATH, loginBody(email), LoginResponse.class);
+    ResponseEntity<LoginResponse> response =
+        post(LOGIN_PATH, loginBody(email), LoginResponse.class);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(response.getBody()).isNotNull();
@@ -113,8 +114,7 @@ class AuthIT extends FacadeIT{
 
   @Test
   void login_with_unknown_email_returns_401() {
-    ResponseEntity<Map> response =
-        post(LOGIN_PATH, loginBody("nobody@example.com"), Map.class);
+    ResponseEntity<Map> response = post(LOGIN_PATH, loginBody("nobody@example.com"), Map.class);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     assertThat(response.getBody()).extracting("error").isEqualTo("UNAUTHORIZED");
@@ -135,10 +135,7 @@ class AuthIT extends FacadeIT{
   @Test
   void login_with_invalid_email_returns_400() {
     ResponseEntity<Map> response =
-        post(
-            LOGIN_PATH,
-            "{\"email\":\"invalid\",\"password\":\"password123\"}",
-            Map.class);
+        post(LOGIN_PATH, "{\"email\":\"invalid\",\"password\":\"password123\"}", Map.class);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
@@ -208,7 +205,9 @@ class AuthIT extends FacadeIT{
   }
 
   private static String registerBody(String email) {
-    return "{\"email\":\"" + email + "\",\"password\":\"password123\",\"firstName\":\"John\","
+    return "{\"email\":\""
+        + email
+        + "\",\"password\":\"password123\",\"firstName\":\"John\","
         + "\"lastName\":\"Doe\",\"role\":\"CLIENT\",\"phone\":\"+261340000000\","
         + "\"birthdate\":\"1990-05-15\"}";
   }

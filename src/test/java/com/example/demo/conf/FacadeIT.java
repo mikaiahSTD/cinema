@@ -12,16 +12,15 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
 @Testcontainers
 @PojaGenerated
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Slf4j
 public abstract class FacadeIT {
 
-  @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres =
-        new PostgreSQLContainer<>("postgres:16");
+  @Container @ServiceConnection
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
 
   @SneakyThrows
   @DynamicPropertySource
