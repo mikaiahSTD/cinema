@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -95,6 +96,23 @@ public abstract class ControllerIT extends FacadeIT {
       headers.setBearerAuth(token);
     }
     return restTemplate.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), type);
+  }
+
+  protected <T> ResponseEntity<T> get(
+      String path, String token, ParameterizedTypeReference<T> type) {
+    HttpHeaders headers = new HttpHeaders();
+    if (token != null) {
+      headers.setBearerAuth(token);
+    }
+    return restTemplate.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), type);
+  }
+
+  protected <T> ResponseEntity<T> delete(String path, String token, Class<T> type) {
+    HttpHeaders headers = new HttpHeaders();
+    if (token != null) {
+      headers.setBearerAuth(token);
+    }
+    return restTemplate.exchange(path, HttpMethod.DELETE, new HttpEntity<>(headers), type);
   }
 
   protected JRoom saveRoom(String number, int capacity) {

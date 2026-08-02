@@ -59,6 +59,9 @@ public class SecurityConfig {
                     .anonymous()
                     .requestMatchers(HttpMethod.PUT, "/movies", "/projections")
                     .hasRole("MANAGER")
+                    .requestMatchers(HttpMethod.DELETE, "/movies", "/movies/*", "/projections",
+                            "/projections/*", "/reservations", "/reservations/*")
+                    .hasRole("MANAGER")
                     .requestMatchers(HttpMethod.GET, "/reservations")
                     .hasAnyRole("EMPLOYEE", "MANAGER")
                     .anyRequest()

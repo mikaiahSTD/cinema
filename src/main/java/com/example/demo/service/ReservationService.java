@@ -8,13 +8,14 @@ import com.example.demo.exception.ForbiddenException;
 import com.example.demo.exception.NotFoundException;
 import com.example.demo.mapper.ReservationMapper;
 import com.example.demo.model.User;
+import com.example.demo.pageable.Page;
 import com.example.demo.repository.ReservationRepository;
 import com.example.demo.repository.model.JReservation;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,8 +26,8 @@ public class ReservationService {
   private ReservationMapper reservationMapper;
 
   @Transactional
-  public List<ReservationResponse> getAllReservations() {
-    return reservationRepository.findAll().stream().map(reservationMapper::toResponse).toList();
+  public Page<ReservationResponse> getAllReservations(Pageable pageable) {
+    return Page.from(reservationRepository.findAll(pageable).map(reservationMapper::toResponse));
   }
 
   @Transactional
@@ -75,5 +76,14 @@ public class ReservationService {
     reservation.setStatus(requestedStatus);
 
     return reservationMapper.toResponse(reservationRepository.save(reservation));
+  }
+
+  @Transactional
+  public void deleteReservation(UUID id) {
+    JReservation reservation =
+        reservationRepository
+            .findById(id)
+            .orElseThrow(() -> new NotFoundException("Reservation not found with id: " + id));
+    reservationRepository.delete(reservation);
   }
 }
