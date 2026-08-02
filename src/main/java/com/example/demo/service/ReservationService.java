@@ -4,13 +4,17 @@ import com.example.demo.constant.ReservationStatus;
 import com.example.demo.constant.UserRole;
 import com.example.demo.dto.reservation.ReservationResponse;
 import com.example.demo.dto.reservation.ReservationUpsertRequest;
+<<<<<<< HEAD
 import com.example.demo.exception.ConflictException;
+=======
+>>>>>>> preprod
 import com.example.demo.exception.ForbiddenException;
 import com.example.demo.exception.NotFoundException;
 import com.example.demo.mapper.ReservationMapper;
 import com.example.demo.model.User;
 import com.example.demo.pageable.Page;
 import com.example.demo.repository.ReservationRepository;
+<<<<<<< HEAD
 import com.example.demo.repository.model.JProjection;
 import com.example.demo.repository.model.JReservation;
 import com.example.demo.repository.model.JSeat;
@@ -19,6 +23,12 @@ import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+=======
+import com.example.demo.repository.model.JReservation;
+import jakarta.transaction.Transactional;
+import java.time.Instant;
+import java.util.UUID;
+>>>>>>> preprod
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -95,6 +105,7 @@ public class ReservationService {
             .orElseThrow(() -> new NotFoundException("Reservation not found with id: " + id));
     reservationRepository.delete(reservation);
   }
+<<<<<<< HEAD
 
   @Transactional
   public ReservationResponse validateReservation(UUID id) {
@@ -170,4 +181,6 @@ public class ReservationService {
     reservation.setStatus(ReservationStatus.CANCELED);
     return reservationMapper.toResponse(reservationRepository.save(reservation));
   }
+=======
+>>>>>>> preprod
 }
