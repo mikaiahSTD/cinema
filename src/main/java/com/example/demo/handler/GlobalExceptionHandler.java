@@ -10,6 +10,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -194,6 +195,18 @@ public class GlobalExceptionHandler {
         .body(
             ErrorBody.builder()
                 .error("CONFLICT")
+                .message(ex.getMessage())
+                .status(status.value())
+                .build());
+  }
+
+  @ExceptionHandler(BadCredentialsException.class)
+  public ResponseEntity<ErrorBody> handleBadCredentials(BadCredentialsException ex) {
+    HttpStatus status = HttpStatus.UNAUTHORIZED;
+    return ResponseEntity.status(status)
+        .body(
+            ErrorBody.builder()
+                .error("UNAUTHORIZED")
                 .message(ex.getMessage())
                 .status(status.value())
                 .build());
