@@ -3,7 +3,6 @@ package com.example.demo.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNull;
 
-import com.example.demo.conf.FacadeIT;
 import com.example.demo.dto.auth.LoginResponse;
 import com.example.demo.dto.auth.RegisterRequest;
 import com.example.demo.mapper.UserMapper;
@@ -25,7 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-class AuthIT extends FacadeIT {
+class AuthIT extends ControllerIT {
 
   private static final String JWT_SECRET =
       "VGhpc0lzQVN1cGVyU2VjcmV0S2V5VGhhdElzQXRMZWFzdDMyQnl0ZXNMb25nRm9ySFM1MTI=";
@@ -223,7 +222,7 @@ class AuthIT extends FacadeIT {
     return login.getBody().token();
   }
 
-  private static HttpEntity<String> json(String body) {
+  protected static HttpEntity<String> json(String body) {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     return new HttpEntity<>(body, headers);
