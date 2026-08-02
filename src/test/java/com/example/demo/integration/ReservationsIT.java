@@ -36,8 +36,15 @@ class ReservationsIT extends ControllerIT {
         "{\"projectionId\":\"%s\",\"seatIds\":[\"%s\"]}", projection.getId(), seat.getId());
   }
 
-  private record SeededData(JRoom room, JSeat seatA, JSeat seatB, JMovie movie,
-      JProjection projection) {}
+  private static String reservationBody(JProjection projection, JSeat seat, String status) {
+    String statusPart = status == null ? "" : ",\"status\":\"" + status + "\"";
+    return String.format(
+        "{\"projectionId\":\"%s\",\"seatIds\":[\"%s\"]%s}",
+        projection.getId(), seat.getId(), statusPart);
+  }
+
+  private record SeededData(
+      JRoom room, JSeat seatA, JSeat seatB, JMovie movie, JProjection projection) {}
 
   private SeededData seedWithCapacity(int capacity) {
     JRoom room = saveRoom("R-cap-" + UUID.randomUUID(), capacity);
@@ -293,7 +300,10 @@ class ReservationsIT extends ControllerIT {
     ResponseEntity<ReservationResponse> created =
         put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
     ResponseEntity<ReservationResponse> validated =
-        put("/reservations/" + created.getBody().id() + "/validate", "", managerToken,
+        put(
+            "/reservations/" + created.getBody().id() + "/validate",
+            "",
+            managerToken,
             ReservationResponse.class);
     assertThat(validated.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(validated.getBody().status()).isEqualTo(ReservationStatus.SUCCESS);
@@ -306,16 +316,25 @@ class ReservationsIT extends ControllerIT {
     SeededData data = seedWithCapacity(1);
 
     ResponseEntity<ReservationResponse> first =
-        put("/reservations", reservationBody(data.projection(), data.seatA()), clientToken,
+        put(
+            "/reservations",
+            reservationBody(data.projection(), data.seatA()),
+            clientToken,
             ReservationResponse.class);
     ResponseEntity<ReservationResponse> validated =
-        put("/reservations/" + first.getBody().id() + "/validate", "", managerToken,
+        put(
+            "/reservations/" + first.getBody().id() + "/validate",
+            "",
+            managerToken,
             ReservationResponse.class);
     assertThat(validated.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(validated.getBody().status()).isEqualTo(ReservationStatus.SUCCESS);
 
     ResponseEntity<ReservationResponse> second =
-        put("/reservations", reservationBody(data.projection(), data.seatB()), clientToken,
+        put(
+            "/reservations",
+            reservationBody(data.projection(), data.seatB()),
+            clientToken,
             ReservationResponse.class);
     ResponseEntity<Map> tooMany =
         put("/reservations/" + second.getBody().id() + "/validate", "", managerToken, Map.class);
@@ -330,26 +349,41 @@ class ReservationsIT extends ControllerIT {
     SeededData data = seedWithCapacity(1);
 
     ResponseEntity<ReservationResponse> first =
-        put("/reservations", reservationBody(data.projection(), data.seatA()), clientToken,
+        put(
+            "/reservations",
+            reservationBody(data.projection(), data.seatA()),
+            clientToken,
             ReservationResponse.class);
-    put("/reservations/" + first.getBody().id() + "/validate", "", managerToken,
+    put(
+        "/reservations/" + first.getBody().id() + "/validate",
+        "",
+        managerToken,
         ReservationResponse.class);
 
     ResponseEntity<ReservationResponse> second =
-        put("/reservations", reservationBody(data.projection(), data.seatB()), clientToken,
+        put(
+            "/reservations",
+            reservationBody(data.projection(), data.seatB()),
+            clientToken,
             ReservationResponse.class);
     ResponseEntity<Map> blocked =
         put("/reservations/" + second.getBody().id() + "/validate", "", managerToken, Map.class);
     assertThat(blocked.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
 
     ResponseEntity<ReservationResponse> canceled =
-        put("/reservations/" + first.getBody().id() + "/cancel", "", managerToken,
+        put(
+            "/reservations/" + first.getBody().id() + "/cancel",
+            "",
+            managerToken,
             ReservationResponse.class);
     assertThat(canceled.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(canceled.getBody().status()).isEqualTo(ReservationStatus.CANCELED);
 
     ResponseEntity<ReservationResponse> nowValid =
-        put("/reservations/" + second.getBody().id() + "/validate", "", managerToken,
+        put(
+            "/reservations/" + second.getBody().id() + "/validate",
+            "",
+            managerToken,
             ReservationResponse.class);
     assertThat(nowValid.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(nowValid.getBody().status()).isEqualTo(ReservationStatus.SUCCESS);
@@ -362,7 +396,10 @@ class ReservationsIT extends ControllerIT {
     TestData data = seed();
     ResponseEntity<ReservationResponse> created =
         put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
-    put("/reservations/" + created.getBody().id() + "/validate", "", managerToken,
+    put(
+        "/reservations/" + created.getBody().id() + "/validate",
+        "",
+        managerToken,
         ReservationResponse.class);
     ResponseEntity<Map> again =
         put("/reservations/" + created.getBody().id() + "/validate", "", managerToken, Map.class);
@@ -376,7 +413,10 @@ class ReservationsIT extends ControllerIT {
     TestData data = seed();
     ResponseEntity<ReservationResponse> created =
         put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
-    put("/reservations/" + created.getBody().id() + "/cancel", "", managerToken,
+    put(
+        "/reservations/" + created.getBody().id() + "/cancel",
+        "",
+        managerToken,
         ReservationResponse.class);
     ResponseEntity<Map> validated =
         put("/reservations/" + created.getBody().id() + "/validate", "", managerToken, Map.class);
@@ -422,7 +462,10 @@ class ReservationsIT extends ControllerIT {
     ResponseEntity<ReservationResponse> created =
         put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
     ResponseEntity<ReservationResponse> canceled =
-        put("/reservations/" + created.getBody().id() + "/cancel", "", managerToken,
+        put(
+            "/reservations/" + created.getBody().id() + "/cancel",
+            "",
+            managerToken,
             ReservationResponse.class);
     assertThat(canceled.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(canceled.getBody().status()).isEqualTo(ReservationStatus.CANCELED);
@@ -435,7 +478,10 @@ class ReservationsIT extends ControllerIT {
     TestData data = seed();
     ResponseEntity<ReservationResponse> created =
         put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
-    put("/reservations/" + created.getBody().id() + "/cancel", "", managerToken,
+    put(
+        "/reservations/" + created.getBody().id() + "/cancel",
+        "",
+        managerToken,
         ReservationResponse.class);
     ResponseEntity<Map> again =
         put("/reservations/" + created.getBody().id() + "/cancel", "", managerToken, Map.class);
@@ -471,6 +517,118 @@ class ReservationsIT extends ControllerIT {
     ResponseEntity<Map> response =
         put("/reservations/" + created.getBody().id() + "/cancel", "", employeeToken, Map.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+  }
+
+  @Test
+  void employee_cannot_validate_when_room_full_via_upsert() {
+    String employeeToken = registerAndLogin("res-upsert-cap-emp@example.com", EMPLOYEE);
+    SeededData data = seedWithCapacity(1);
+    ResponseEntity<ReservationResponse> first =
+        put(
+            "/reservations",
+            reservationBody(data.projection(), data.seatA(), "SUCCESS"),
+            employeeToken,
+            ReservationResponse.class);
+    assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(first.getBody().status()).isEqualTo(ReservationStatus.SUCCESS);
+
+    ResponseEntity<Map> second =
+        put(
+            "/reservations",
+            reservationBody(data.projection(), data.seatB(), "SUCCESS"),
+            employeeToken,
+            Map.class);
+    assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(second.getBody()).extracting("error").isEqualTo("CONFLICT");
+  }
+
+  @Test
+  void validate_reservation_with_already_validated_seat_returns_409() {
+    String clientToken = registerAndLogin("res-seatconf-client@example.com", CLIENT);
+    String managerToken = registerAndLogin("res-seatconf-mgr@example.com", MANAGER);
+    SeededData data = seedWithCapacity(2);
+    ResponseEntity<ReservationResponse> first =
+        put(
+            "/reservations",
+            reservationBody(data.projection(), data.seatA()),
+            clientToken,
+            ReservationResponse.class);
+    ResponseEntity<ReservationResponse> second =
+        put(
+            "/reservations",
+            reservationBody(data.projection(), data.seatA()),
+            clientToken,
+            ReservationResponse.class);
+
+    ResponseEntity<ReservationResponse> validated =
+        put(
+            "/reservations/" + first.getBody().id() + "/validate",
+            "",
+            managerToken,
+            ReservationResponse.class);
+    assertThat(validated.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    ResponseEntity<Map> conflict =
+        put("/reservations/" + second.getBody().id() + "/validate", "", managerToken, Map.class);
+    assertThat(conflict.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(conflict.getBody()).extracting("error").isEqualTo("CONFLICT");
+  }
+
+  @Test
+  void upsert_success_with_already_validated_seat_returns_409() {
+    String clientToken = registerAndLogin("res-upsert-seat-client@example.com", CLIENT);
+    String managerToken = registerAndLogin("res-upsert-seat-mgr@example.com", MANAGER);
+    String employeeToken = registerAndLogin("res-upsert-seat-emp@example.com", EMPLOYEE);
+    SeededData data = seedWithCapacity(2);
+    ResponseEntity<ReservationResponse> created =
+        put(
+            "/reservations",
+            reservationBody(data.projection(), data.seatA()),
+            clientToken,
+            ReservationResponse.class);
+    ResponseEntity<ReservationResponse> validated =
+        put(
+            "/reservations/" + created.getBody().id() + "/validate",
+            "",
+            managerToken,
+            ReservationResponse.class);
+    assertThat(validated.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    ResponseEntity<Map> conflict =
+        put(
+            "/reservations",
+            reservationBody(data.projection(), data.seatA(), "SUCCESS"),
+            employeeToken,
+            Map.class);
+    assertThat(conflict.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+  }
+
+  @Test
+  void upsert_success_is_idempotent_for_same_reservation() {
+    String clientToken = registerAndLogin("res-idempotent-client@example.com", CLIENT);
+    String managerToken = registerAndLogin("res-idempotent-mgr@example.com", MANAGER);
+    TestData data = seed();
+    ResponseEntity<ReservationResponse> created =
+        put("/reservations", reservationBody(data, null), clientToken, ReservationResponse.class);
+    UUID reservationId = created.getBody().id();
+
+    ResponseEntity<ReservationResponse> firstValidate =
+        put(
+            "/reservations",
+            updateBody(data, reservationId, "SUCCESS"),
+            managerToken,
+            ReservationResponse.class);
+    assertThat(firstValidate.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(firstValidate.getBody().status()).isEqualTo(ReservationStatus.SUCCESS);
+
+    ResponseEntity<ReservationResponse> secondValidate =
+        put(
+            "/reservations",
+            updateBody(data, reservationId, "SUCCESS"),
+            managerToken,
+            ReservationResponse.class);
+    assertThat(secondValidate.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(secondValidate.getBody().status()).isEqualTo(ReservationStatus.SUCCESS);
   }
 
   @Test

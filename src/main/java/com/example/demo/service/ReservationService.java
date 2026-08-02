@@ -11,10 +11,14 @@ import com.example.demo.mapper.ReservationMapper;
 import com.example.demo.model.User;
 import com.example.demo.pageable.Page;
 import com.example.demo.repository.ReservationRepository;
+import com.example.demo.repository.model.JProjection;
 import com.example.demo.repository.model.JReservation;
+import com.example.demo.repository.model.JSeat;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -74,6 +78,10 @@ public class ReservationService {
     }
 
     reservationMapper.toJReservation(req, reservation, currentUser.getId());
+    if (requestedStatus == ReservationStatus.SUCCESS) {
+      checkRoomCapacity(reservation);
+      checkSeatsAvailable(reservation);
+    }
     reservation.setStatus(requestedStatus);
 
     return reservationMapper.toResponse(reservationRepository.save(reservation));
@@ -101,10 +109,20 @@ public class ReservationService {
       throw new ConflictException("Cannot validate a canceled reservation");
     }
 
-    int roomCapacity = reservation.getProjection().getRoom().getCapacity();
+    checkRoomCapacity(reservation);
+    checkSeatsAvailable(reservation);
+
+    reservation.setStatus(ReservationStatus.SUCCESS);
+    return reservationMapper.toResponse(reservationRepository.save(reservation));
+  }
+
+  private void checkRoomCapacity(JReservation reservation) {
+    JProjection projection = reservation.getProjection();
+    int roomCapacity = projection.getRoom().getCapacity();
     long validatedSeats =
-        reservation.getProjection().getReservations().stream()
+        projection.getReservations().stream()
             .filter(r -> r.getStatus() == ReservationStatus.SUCCESS)
+            .filter(r -> !r.getId().equals(reservation.getId()))
             .mapToLong(r -> r.getSeats().size())
             .sum();
     long requestedSeats = reservation.getSeats().size();
@@ -118,9 +136,26 @@ public class ReservationService {
               + requestedSeats
               + ")");
     }
+  }
 
-    reservation.setStatus(ReservationStatus.SUCCESS);
-    return reservationMapper.toResponse(reservationRepository.save(reservation));
+  private void checkSeatsAvailable(JReservation reservation) {
+    Set<UUID> validatedSeatIds =
+        reservation.getProjection().getReservations().stream()
+            .filter(r -> r.getStatus() == ReservationStatus.SUCCESS)
+            .filter(r -> !r.getId().equals(reservation.getId()))
+            .flatMap(r -> r.getSeats().stream())
+            .map(JSeat::getId)
+            .collect(Collectors.toSet());
+    Set<UUID> conflictingSeats =
+        reservation.getSeats().stream()
+            .map(JSeat::getId)
+            .filter(validatedSeatIds::contains)
+            .collect(Collectors.toSet());
+    if (!conflictingSeats.isEmpty()) {
+      throw new ConflictException(
+          "Cannot validate reservation: seats already validated in another reservation: "
+              + conflictingSeats);
+    }
   }
 
   @Transactional
